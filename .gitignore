@@ -1,0 +1,38 @@
+# Environment & secrets
+.env
+*.env
+config/secrets.php
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+*.log
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# XAMPP / PHP
+*.sql.bak
+uploads/tmp/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

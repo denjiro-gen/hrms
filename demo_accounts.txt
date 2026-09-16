@@ -1,0 +1,17 @@
+﻿Demo Accounts for Bestlink HRMS:
+
+1. System Admin
+Email: admin@bestlink.edu.ph
+Password: password
+
+2. HR Officer
+Email: hr@bestlink.edu.ph
+Password: password
+
+3. Dept Head
+Email: depthead@bestlink.edu.ph
+Password: password
+
+4. School Admin
+Email: school@bestlink.edu.ph
+Password: password
