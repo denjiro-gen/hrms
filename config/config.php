@@ -4,7 +4,7 @@
  * Bestlink College HRMS
  */
 
-define('BASE_URL', '/bestlink_hrms');
+define('BASE_URL', '/hrms');
 define('UPLOAD_PATH',     __DIR__ . '/../uploads/');
 define('UPLOAD_RESUMES',  __DIR__ . '/../uploads/resumes/');
 define('UPLOAD_DOCS',     __DIR__ . '/../uploads/employee_documents/');

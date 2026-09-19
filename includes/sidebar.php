@@ -19,9 +19,33 @@ $initials = strtoupper(substr($_SESSION['first_name'] ?? 'U', 0, 1) . substr($_S
     </a>
   </div>
 
-  <!-- Nav icons -->
   <nav class="sidebar-nav">
 
+    <?php if ($role === 'employee'): ?>
+    <!-- Employee Navigation -->
+    <a href="<?= BASE_URL ?>/portal.php" class="nav-link <?= str_contains($currentPage,'portal') ? 'active' : '' ?>" data-tip="My Dashboard">
+      <i class="fas fa-th-large"></i>
+    </a>
+    <a href="<?= BASE_URL ?>/employee_profile.php" class="nav-link <?= str_contains($currentPage,'employee_profile') ? 'active' : '' ?>" data-tip="My Profile">
+      <i class="fas fa-user-circle"></i>
+    </a>
+    <div class="nav-divider"></div>
+    <a href="<?= BASE_URL ?>/modules/attendance/index.php" class="nav-link <?= activeIf('/attendance/') ?>" data-tip="My Attendance">
+      <i class="fas fa-clock"></i>
+    </a>
+    <a href="<?= BASE_URL ?>/modules/leave/index.php" class="nav-link <?= str_contains($currentPage,'/leave/') || str_contains($currentPage,'/overtime/') ? 'active' : '' ?>" data-tip="Leave & Overtime">
+      <i class="fas fa-calendar-minus"></i>
+    </a>
+    <a href="<?= BASE_URL ?>/modules/benefits/index.php" class="nav-link <?= activeIf('/benefits/') ?>" data-tip="My Benefits">
+      <i class="fas fa-hand-holding-heart"></i>
+    </a>
+    <div class="nav-divider"></div>
+    <a href="<?= BASE_URL ?>/change_password.php" class="nav-link <?= activeIf('change_password') ?>" data-tip="Change Password">
+      <i class="fas fa-key"></i>
+    </a>
+
+    <?php else: ?>
+    <!-- Admin / HR / Manager Navigation -->
     <a href="<?= BASE_URL ?>/dashboard.php" class="nav-link <?= activeIf('dashboard') ?>" data-tip="Dashboard">
       <i class="fas fa-th-large"></i>
     </a>
@@ -98,13 +122,15 @@ $initials = strtoupper(substr($_SESSION['first_name'] ?? 'U', 0, 1) . substr($_S
     <?php endif; ?>
 
     <?php endif; ?>
+    <?php endif; ?>
+
   </nav>
 
   <!-- Footer -->
   <div class="sidebar-footer">
-    <div class="sf-avatar" title="<?= e(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '')) ?>">
+    <a href="<?= $role === 'employee' ? BASE_URL.'/employee_profile.php' : '#' ?>" class="sf-avatar" title="<?= e(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '')) ?>">
       <?= e($initials) ?>
-    </div>
+    </a>
     <a href="<?= BASE_URL ?>/logout.php" class="sf-logout" data-tip="Sign Out" title="Sign Out">
       <i class="fas fa-sign-out-alt"></i>
     </a>

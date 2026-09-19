@@ -1,10 +1,24 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth.php';
-requireRole(['admin', 'hr', 'dept_head']);
+requireLogin();
 
-$pageTitle = 'Attendance Records';
+$role = $_SESSION['role_slug'] ?? '';
+$isEmployee = ($role === 'employee');
+if (!in_array($role, ['admin', 'hr', 'dept_head', 'employee'])) {
+    http_response_code(403); die('Access denied.');
+}
+
+$pageTitle = $isEmployee ? 'My Attendance' : 'Attendance Records';
 $db = getDB();
+
+// For employees, find their employee_id by email
+$empId = null;
+if ($isEmployee) {
+    $s = $db->prepare("SELECT id FROM employees WHERE email = ? LIMIT 1");
+    $s->execute([$_SESSION['email'] ?? '']);
+    $empId = $s->fetchColumn() ?: 0;
+}
 
 $search = $_GET['search'] ?? '';
 $date   = $_GET['date'] ?? date('Y-m-d');
@@ -14,32 +28,35 @@ $perPage = 20;
 $where = ["a.attendance_date = ?"];
 $params = [$date];
 
-if ($search) {
-    $where[] = "(e.first_name LIKE ? OR e.last_name LIKE ? OR e.employee_code LIKE ?)";
-    $params = array_merge($params, ["%$search%", "%$search%", "%$search%"]);
-}
-
-if (isDeptHead()) {
-    $where[] = "e.department_id = ?";
-    $params[] = $_SESSION['dept_id'];
+if ($isEmployee) {
+    // Employee sees only their own records
+    $where[] = "a.employee_id = ?";
+    $params[] = $empId;
+} else {
+    if ($search) {
+        $where[] = "(e.first_name LIKE ? OR e.last_name LIKE ? OR e.employee_code LIKE ?)";
+        $params = array_merge($params, ["%$search%", "%$search%", "%$search%"]);
+    }
+    if (isDeptHead()) {
+        $where[] = "e.department_id = ?";
+        $params[] = $_SESSION['dept_id'];
+    }
 }
 
 $whereClause = implode(' AND ', $where);
 
-// Count total
 $stmt = $db->prepare("SELECT COUNT(*) FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE $whereClause");
 $stmt->execute($params);
 $total = (int) $stmt->fetchColumn();
 
 $pag = paginate($total, $perPage, $page);
 
-// Fetch records
 $sql = "SELECT a.*, e.employee_code, e.first_name, e.last_name, d.code as dept_code 
         FROM attendance a 
         JOIN employees e ON a.employee_id = e.id 
         LEFT JOIN departments d ON e.department_id = d.id 
         WHERE $whereClause 
-        ORDER BY e.last_name ASC 
+        ORDER BY a.attendance_date DESC, e.last_name ASC 
         LIMIT {$pag['per_page']} OFFSET {$pag['offset']}";
 $stmt = $db->prepare($sql);
 $stmt->execute($params);
@@ -52,8 +69,14 @@ include __DIR__ . '/../../includes/sidebar.php';
 
 <main class="main-content hrms-main">
   <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="page-title mb-0"><i class="fas fa-calendar-check me-2"></i> Daily Attendance</h1>
-  </div>
+    <?php if ($isEmployee): ?>
+    <div class="d-flex align-items-center gap-3">
+      <a href="<?= BASE_URL ?>/portal.php" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i></a>
+      <h1 class="page-title mb-0"><i class="fas fa-clock me-2"></i>My Attendance</h1>
+    </div>
+    <?php else: ?>
+    <h1 class="page-title mb-0"><i class="fas fa-calendar-check me-2"></i>Daily Attendance</h1>
+    <?php endif; ?>
 
   <div class="card mb-4">
     <div class="card-body p-3">

@@ -12,6 +12,6 @@ $pageTitle = $pageTitle ?? 'Bestlink HRMS';
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/hrms.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/hrms.css?v=<?= time() ?>">
 </head>
 <body>

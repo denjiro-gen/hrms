@@ -1,18 +1,32 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth.php';
-requireRole(['admin', 'hr', 'dept_head']);
+requireLogin();
 
-$pageTitle = 'Leave Requests';
+$role = $_SESSION['role_slug'] ?? '';
+$isEmployee = ($role === 'employee');
+if (!in_array($role, ['admin', 'hr', 'dept_head', 'employee'])) {
+    http_response_code(403); die('Access denied.');
+}
+
+$pageTitle = $isEmployee ? 'My Leave History' : 'Leave Requests';
 $db = getDB();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['id'])) {
+// For employees: find their employee record
+$myEmpId = null;
+if ($isEmployee) {
+    $s = $db->prepare("SELECT id FROM employees WHERE email = ? LIMIT 1");
+    $s->execute([$_SESSION['email'] ?? '']);
+    $myEmpId = $s->fetchColumn() ?: 0;
+}
+
+// Only HR/Admin/DeptHead can approve/reject
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['id']) && !$isEmployee) {
     verifyCsrf();
     $id = (int)$_POST['id'];
     $action = $_POST['action'];
     $remarks = $_POST['remarks'] ?? '';
     
-    // Authorization check
     $stmt = $db->prepare("SELECT l.*, e.department_id FROM leave_requests l JOIN employees e ON l.employee_id = e.id WHERE l.id = ?");
     $stmt->execute([$id]);
     $leave = $stmt->fetch();
@@ -29,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
         } elseif (isHR() || isAdmin()) {
             if ($action === 'approve') {
                 $db->prepare("UPDATE leave_requests SET status='HR Approved', hr_action='Approved', hr_id=?, hr_remarks=?, hr_at=NOW() WHERE id=?")->execute([$_SESSION['user_id'], $remarks, $id]);
-                // Here we would also deduct from leave balance in a full implementation
             } elseif ($action === 'reject') {
                 $db->prepare("UPDATE leave_requests SET status='Rejected', hr_action='Rejected', hr_id=?, hr_remarks=?, hr_at=NOW() WHERE id=?")->execute([$_SESSION['user_id'], $remarks, $id]);
             }
@@ -41,25 +54,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     exit;
 }
 
-$tab = $_GET['tab'] ?? 'pending';
+// Build query
 $where = ["1=1"];
 $params = [];
 
-if ($tab === 'pending') {
-    if (isDeptHead()) {
-        $where[] = "l.status = 'Pending'";
-    } else {
-        $where[] = "(l.status = 'Pending' OR l.status = 'Dept Approved')";
-    }
+if ($isEmployee) {
+    // Employee only sees their own
+    $where[] = "l.employee_id = ?";
+    $params[] = $myEmpId;
 } else {
-    $where[] = "(l.status = 'HR Approved' OR l.status = 'Rejected')";
+    $tab = $_GET['tab'] ?? 'pending';
+    if ($tab === 'pending') {
+        if (isDeptHead()) {
+            $where[] = "l.status = 'Pending'";
+        } else {
+            $where[] = "(l.status = 'Pending' OR l.status = 'Dept Approved')";
+        }
+    } else {
+        $where[] = "(l.status = 'HR Approved' OR l.status = 'Rejected')";
+    }
+    if (isDeptHead()) {
+        $where[] = "e.department_id = ?";
+        $params[] = $_SESSION['dept_id'];
+    }
 }
 
-if (isDeptHead()) {
-    $where[] = "e.department_id = ?";
-    $params[] = $_SESSION['dept_id'];
-}
-
+$tab = $_GET['tab'] ?? 'pending';
 $whereClause = implode(' AND ', $where);
 
 $sql = "SELECT l.*, e.first_name, e.last_name, d.code as dept_code, t.name as leave_type
@@ -80,7 +100,15 @@ include __DIR__ . '/../../includes/sidebar.php';
 
 <main class="main-content hrms-main">
   <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="page-title mb-0"><i class="fas fa-calendar-times me-2"></i> Leave Management</h1>
+    <?php if ($isEmployee): ?>
+    <div class="d-flex align-items-center gap-3">
+      <a href="<?= BASE_URL ?>/portal.php" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i></a>
+      <h1 class="page-title mb-0"><i class="fas fa-calendar-times me-2"></i>My Leave History</h1>
+    </div>
+    <a href="<?= BASE_URL ?>/modules/leave/apply.php" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Apply for Leave</a>
+    <?php else: ?>
+    <h1 class="page-title mb-0"><i class="fas fa-calendar-times me-2"></i>Leave Management</h1>
+    <?php endif; ?>
   </div>
 
   <?php if ($msg = getFlash('success')): ?>

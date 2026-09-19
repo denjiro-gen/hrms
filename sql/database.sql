@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- BESTLINK COLLEGE OF THE PHILIPPINES
 -- AI-Based Human Resource Management System
 -- Database Schema v1.0
@@ -48,6 +48,8 @@ CREATE TABLE `employees` (
   `date_of_birth` DATE DEFAULT NULL,
   `gender` ENUM('Male','Female','Other') DEFAULT NULL,
   `civil_status` ENUM('Single','Married','Widowed','Separated','Divorced') DEFAULT NULL,
+  `nationality` VARCHAR(100) DEFAULT NULL,
+  `religion` VARCHAR(100) DEFAULT NULL,
   `contact_number` VARCHAR(20) DEFAULT NULL,
   `email` VARCHAR(150) DEFAULT NULL,
   `address` TEXT DEFAULT NULL,

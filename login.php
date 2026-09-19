@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/auth.php';
 
@@ -18,7 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!loginUser($email, $password)) {
         $error = 'Incorrect email or password.';
     } else {
-        header('Location: ' . BASE_URL . '/dashboard.php');
+        // Redirect employees to their portal, everyone else to dashboard
+        $role = $_SESSION['role_slug'] ?? '';
+        if ($role === 'employee') {
+            header('Location: ' . BASE_URL . '/portal.php');
+        } else {
+            header('Location: ' . BASE_URL . '/dashboard.php');
+        }
         exit;
     }
 }
@@ -380,6 +386,11 @@ $timeout = !empty($_GET['timeout']);
 
       <div class="form-footer">
         &copy; <?= date('Y') ?> Bestlink College of the Philippines
+      </div>
+
+      <div style="margin-top:22px;padding:14px 16px;background:#F0F9FF;border:1.5px solid #BAE6FD;border-radius:10px;text-align:left;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0369A1;letter-spacing:0.06em;margin-bottom:6px;">👤 New Employee?</div>
+        <div style="font-size:13px;color:#0C4A6E;line-height:1.5;">Use the <strong>email and temporary password</strong> sent to your inbox when you were hired. You will be prompted to change your password on first login.</div>
       </div>
 
     </div>

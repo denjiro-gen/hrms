@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth.php';
 requireRole(['admin', 'hr']);
@@ -16,8 +16,9 @@ if (!$applicationId) {
 
 $db = getDB();
 
-// Fetch application and job details
+// Fetch application and job details (including resume_path for CV analysis)
 $stmt = $db->prepare("SELECT a.*, app.skills as applicant_skills, app.highest_education, app.years_experience,
+                      app.resume_path,
                       j.required_skills, j.preferred_skills, j.min_education, j.experience_required 
                       FROM applications a 
                       JOIN applicants app ON a.applicant_id = app.id 
@@ -40,18 +41,28 @@ if (!$aiEnabled) {
     exit;
 }
 
+// Build absolute path to the CV file so Python can read it directly
+$cvAbsPath = null;
+if (!empty($data['resume_path'])) {
+    $candidate = __DIR__ . '/../../uploads/resumes/' . $data['resume_path'];
+    if (file_exists($candidate)) {
+        $cvAbsPath = realpath($candidate);
+    }
+}
+
 // Prepare payload for FastAPI Python service
 $payload = [
     'applicant' => [
-        'skills' => array_map('trim', explode(',', $data['applicant_skills'])),
-        'education' => $data['highest_education'],
-        'experience' => (float)$data['years_experience']
+        'skills'    => array_filter(array_map('trim', explode(',', $data['applicant_skills'] ?? ''))),
+        'education' => $data['highest_education'] ?? '',
+        'experience'=> (float)($data['years_experience'] ?? 0),
+        'cv_path'   => $cvAbsPath,   // Absolute path — Python reads file directly
     ],
     'job' => [
-        'required_skills' => array_map('trim', explode(',', $data['required_skills'])),
-        'preferred_skills' => array_map('trim', explode(',', $data['preferred_skills'])),
-        'min_education' => $data['min_education'],
-        'experience_required' => $data['experience_required']
+        'required_skills'   => array_filter(array_map('trim', explode(',', $data['required_skills'] ?? ''))),
+        'preferred_skills'  => array_filter(array_map('trim', explode(',', $data['preferred_skills'] ?? ''))),
+        'min_education'     => $data['min_education'] ?? '',
+        'experience_required' => $data['experience_required'] ?? ''
     ]
 ];
 
@@ -64,7 +75,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_TIMEOUT, 5); // 5 seconds timeout
+curl_setopt($ch, CURLOPT_TIMEOUT, 30); // 30s — CV parsing can take a moment
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -78,10 +89,12 @@ $recommendation = 'Review Manually';
 if ($httpCode === 200 && $response) {
     $result = json_decode($response, true);
     if (isset($result['match_score'])) {
-        $matchScore = $result['match_score'];
-        $matchedSkills = $result['matched_skills'] ?? [];
-        $missingSkills = $result['missing_skills'] ?? [];
-        $recommendation = $result['recommendation'] ?? 'Review Manually';
+        $matchScore      = $result['match_score'];
+        $matchedSkills   = $result['matched_skills'] ?? [];
+        $missingSkills   = $result['missing_skills'] ?? [];
+        $recommendation  = $result['recommendation'] ?? 'Review Manually';
+        $cvSkillsFound   = $result['cv_skills_extracted'] ?? 0;
+        $cvNote = $cvAbsPath ? " (CV analyzed: $cvSkillsFound extra skills extracted from document)" : " (No CV file found for deep analysis)";
     }
 } else {
     // GRACEFUL FALLBACK: Basic heuristic matching if AI server is down
@@ -151,7 +164,7 @@ if ($exists) {
     ]);
 }
 
-logAudit('AI Match Evaluation', 'Recruitment', (string)$applicationId, "Generated AI match score: " . number_format($matchScore, 1) . "%");
-flash('success', 'Evaluation completed successfully!');
+logAudit('AI Match Evaluation', 'Recruitment', (string)$applicationId, "Generated AI match score: " . number_format($matchScore, 1) . "%" . ($cvNote ?? ''));
+flash('success', 'AI Evaluation complete! Score: ' . number_format($matchScore, 1) . '% — ' . ($recommendation ?? '') . ($cvNote ?? ''));
 header("Location: applicants/view.php?id=$applicationId");
 exit;

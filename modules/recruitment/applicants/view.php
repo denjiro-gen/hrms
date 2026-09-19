@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../includes/auth.php';
 requireRole(['admin', 'hr']);
@@ -28,18 +28,123 @@ if (!$application) {
 }
 
 // Update status
+require_once __DIR__ . '/../../../includes/mailer.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
     verifyCsrf();
     $newStatus = $_POST['status'] ?? '';
     
     if (in_array($newStatus, ['Applied','Screening','Interview','Shortlisted','Hired','Rejected'])) {
         $db->prepare("UPDATE applications SET status = ? WHERE id = ?")->execute([$newStatus, $id]);
+        
+        // Auto-generate employee and user account if Hired
+        if ($newStatus === 'Hired' && $application['status'] !== 'Hired') {
+            try {
+                $db->beginTransaction();
+                
+                // 1. Create Employee Record
+                $empCode = generateCode('BCP', 'employees', 'employee_code');
+                $stmtEmp = $db->prepare("INSERT INTO employees 
+                    (employee_code, department_id, position, first_name, middle_name, last_name, 
+                     gender, date_of_birth, contact_number, email, address, date_hired) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE())");
+                
+                $stmtEmp->execute([
+                    $empCode,
+                    $application['department_id'],
+                    $application['position_title'],
+                    $application['first_name'],
+                    $application['middle_name'],
+                    $application['last_name'],
+                    $application['gender'],
+                    $application['date_of_birth'],
+                    $application['contact_number'],
+                    $application['email'],
+                    $application['address']
+                ]);
+                $newEmpId = $db->lastInsertId();
+                
+                // 2. Determine Role (Create 'Employee' role if not exists)
+                $stmtRole = $db->prepare("SELECT id FROM roles WHERE slug = 'employee'");
+                $stmtRole->execute();
+                $roleId = $stmtRole->fetchColumn();
+                if (!$roleId) {
+                    $db->query("INSERT INTO roles (name, slug, description) VALUES ('Employee', 'employee', 'General Employee')");
+                    $roleId = $db->lastInsertId();
+                }
+                
+                // 3. Create User Account
+                $rawPassword = substr(md5(uniqid()), 0, 8);
+                $hashedPassword = password_hash($rawPassword, PASSWORD_DEFAULT);
+                $username = strtolower(substr($application['first_name'], 0, 1) . $application['last_name']);
+                
+                // Ensure unique username
+                $uCheck = $db->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
+                $uCheck->execute([$username]);
+                if ($uCheck->fetchColumn() > 0) {
+                    $username .= rand(10, 99);
+                }
+                
+                $stmtUser = $db->prepare("INSERT INTO users 
+                    (role_id, employee_id, department_id, username, email, password_hash, first_name, last_name, first_login) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
+                
+                $stmtUser->execute([
+                    $roleId,
+                    $newEmpId,
+                    $application['department_id'],
+                    $username,
+                    $application['email'],
+                    $hashedPassword,
+                    $application['first_name'],
+                    $application['last_name']
+                ]);
+                
+                $db->commit();
+                
+                // 4. Send Hired Email with credentials
+                $emailResult = sendHiredEmail(
+                    $application['email'],
+                    $application['first_name'],
+                    $application['position_title'],
+                    $application['email'],
+                    $rawPassword
+                );
+                
+                if ($emailResult['ok']) {
+                    flash('success', 'Applicant hired! Employee record and user account created. Login credentials emailed.');
+                } else {
+                    flash('warning', 'Applicant hired and account created, but email failed: ' . $emailResult['error']);
+                }
+            } catch (Exception $e) {
+                $db->rollBack();
+                error_log("Failed to auto-generate employee: " . $e->getMessage());
+                flash('error', 'Status updated, but failed to create employee account: ' . $e->getMessage());
+            }
+
+        } elseif ($newStatus !== $application['status'] && in_array($newStatus, ['Screening', 'Interview', 'Shortlisted', 'Rejected'])) {
+            // Send status update notification email
+            $emailResult = sendStatusUpdateEmail(
+                $application['email'],
+                $application['first_name'],
+                $application['position_title'],
+                $newStatus
+            );
+            if ($emailResult['ok']) {
+                flash('success', 'Applicant status updated to "' . $newStatus . '". Notification email sent.');
+            } else {
+                flash('warning', 'Status updated to "' . $newStatus . '", but notification email failed: ' . $emailResult['error']);
+            }
+        } else {
+            flash('success', 'Applicant status updated to ' . $newStatus);
+        }
+        
         logAudit('Update Applicant Status', 'Recruitment', (string)$id, "Status changed to $newStatus for application $id");
-        flash('success', 'Applicant status updated to ' . $newStatus);
         header("Location: view.php?id=$id");
         exit;
     }
 }
+
 
 $fullName = $application['first_name'] . ' ' . $application['middle_name'] . ' ' . $application['last_name'];
 

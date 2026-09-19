@@ -1,4 +1,4 @@
-﻿/* ===================================================================
+/* ===================================================================
    BESTLINK HRMS — CLEAN MINIMAL UI v3.0
    Reference: minimal icon-sidebar, light cards, crisp typography
    =================================================================== */
@@ -310,6 +310,11 @@ a { text-decoration: none; }
 }
 .main-content {
   padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.hrms-main.main-content {
+  padding-top: calc(var(--topbar-h) + 24px);
 }
 
 /* ===================================================================
