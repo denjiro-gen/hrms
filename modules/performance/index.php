@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth.php';
 requireRole(['admin', 'hr', 'dept_head']);
@@ -13,15 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $score = (float)$_POST['rating'];
     $comments = $_POST['comments'];
     
-    // Rating logic 1-5
-    if ($score >= 4.5) $rating = 'Outstanding';
-    elseif ($score >= 3.5) $rating = 'Very Satisfactory';
+    // Rating logic 1-5 (Matching ENUM)
+    if ($score >= 4.5) $rating = 'Excellent';
+    elseif ($score >= 3.5) $rating = 'Very Good';
     elseif ($score >= 2.5) $rating = 'Satisfactory';
-    elseif ($score >= 1.5) $rating = 'Fair';
-    else $rating = 'Poor';
+    elseif ($score >= 1.5) $rating = 'Needs Improvement';
+    else $rating = 'Unsatisfactory';
 
-    $stmt = $db->prepare("INSERT INTO performance_evaluations (employee_id, evaluator_id, evaluation_period, rating, score, comments) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$empId, $_SESSION['user_id'], $period, $rating, $score, $comments]);
+    $evalCode = 'EVAL-' . strtoupper(substr(uniqid(), -6));
+    $pStart = date('Y-01-01');
+    $pEnd = date('Y-12-31');
+
+    $stmt = $db->prepare("INSERT INTO performance_evaluations (eval_code, employee_id, evaluator_id, evaluation_period, period_start, period_end, performance_rating, overall_score, comments, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Submitted')");
+    $stmt->execute([$evalCode, $empId, $_SESSION['user_id'], $period, $pStart, $pEnd, $rating, $score, $comments]);
     
     logAudit('Add Evaluation', 'Performance', (string)$db->lastInsertId(), "Added evaluation for employee $empId");
     flash('success', 'Performance evaluation saved successfully.');
@@ -113,8 +117,8 @@ include __DIR__ . '/../../includes/sidebar.php';
                 </td>
                 <td><?= e($e['evaluation_period']) ?></td>
                 <td>
-                  <div class="fw-bold fs-5 text-primary"><?= number_format($e['score'], 1) ?> <span class="fs-6 text-muted">/ 5.0</span></div>
-                  <div class="small badge bg-light text-dark border"><?= e($e['rating']) ?></div>
+                  <div class="fw-bold fs-5 text-primary"><?= number_format((float)($e['overall_score'] ?? 0), 1) ?> <span class="fs-6 text-muted">/ 5.0</span></div>
+                  <div class="small badge bg-light text-dark border"><?= e($e['performance_rating'] ?? 'N/A') ?></div>
                 </td>
                 <td><?= e($e['eval_first'] . ' ' . $e['eval_last']) ?></td>
                 <td><?= e(date('M d, Y', strtotime($e['created_at']))) ?></td>

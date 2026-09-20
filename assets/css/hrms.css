@@ -305,17 +305,18 @@ a { text-decoration: none; }
 /* ---- MAIN ---- */
 .hrms-main {
   margin-left: var(--sidebar-w);
-  padding-top: var(--topbar-h);
+  padding-top: calc(var(--topbar-h) + 24px); /* Apply the full topbar height + padding natively */
   min-height: 100vh;
 }
 .main-content {
-  padding: 24px;
+  padding: 0 24px 24px 24px; /* Removed top padding here since .hrms-main handles it now */
   max-width: 1400px;
   margin: 0 auto;
 }
 .hrms-main.main-content {
   padding-top: calc(var(--topbar-h) + 24px);
 }
+
 
 /* ===================================================================
    PAGE STRUCTURE
@@ -604,6 +605,13 @@ a { text-decoration: none; }
 .modal-footer { padding: 14px 22px; border-top: 1px solid var(--c-border); }
 .btn-close { opacity: .4; }
 .btn-close:hover { opacity: .8; }
+
+/* Bootstrap modal z-index fix — must appear above sidebar (1000) and topbar (999) */
+.modal        { z-index: 1055 !important; }
+.modal-backdrop { z-index: 1050 !important; }
+/* Ensure nothing blocks the modal trigger buttons */
+.hrms-topbar  { z-index: 1040; }
+.hrms-sidebar { z-index: 1030; }
 
 /* ===================================================================
    NAV TABS (inside cards)
