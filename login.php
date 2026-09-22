@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!loginUser($email, $password)) {
         $error = 'Incorrect email or password.';
     } else {
-        // Redirect employees to their portal, everyone else to dashboard
         $role = $_SESSION['role_slug'] ?? '';
         if ($role === 'employee') {
             header('Location: ' . BASE_URL . '/portal.php');
@@ -62,142 +61,85 @@ $timeout = !empty($_GET['timeout']);
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── LAYOUT ── */
   .page {
     display: flex;
-    min-height: 100vh;
-  }
-
-  /* LEFT STRIP */
-  .left {
-    width: 420px;
-    flex-shrink: 0;
-    background: var(--blue);
-    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 48px 40px;
+    min-height: 100vh;
     position: relative;
-    overflow: hidden;
+    padding: 24px;
+    gap: 20px;
   }
 
-  /* wave at the bottom-right of the strip */
-  .left::after {
+  .page::before {
     content: '';
-    position: absolute;
-    right: -80px;
-    bottom: -80px;
-    width: 260px;
-    height: 260px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.06);
-  }
-  .left::before {
-    content: '';
-    position: absolute;
-    left: -60px;
-    top: -60px;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.06);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('assets/images/bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(8px) brightness(0.65);
+    transform: scale(1.05);
+    z-index: 0;
   }
 
-  .left-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 0;
+  .page::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 60, 120, 0.45);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .page-logo {
     position: relative;
     z-index: 1;
-  }
-
-  /* logo */
-  .logo-wrap {
-    width: 80px;
-    height: 80px;
-    background: #fff;
-    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 22px;
-    box-shadow: 0 4px 20px rgba(0,0,0,.12);
   }
-  .logo-wrap img {
-    width: 60px;
-    height: 60px;
+  .page-logo img {
+    width: 90px;
+    height: 90px;
     object-fit: contain;
-  }
-
-  .school-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.3;
-    margin-bottom: 6px;
-  }
-  .school-sub {
-    font-size: 12.5px;
-    color: rgba(255,255,255,.65);
-    margin-bottom: 40px;
-  }
-
-  /* divider line */
-  .left-divider {
-    width: 40px;
-    height: 2px;
-    background: rgba(255,255,255,.3);
-    border-radius: 2px;
-    margin-bottom: 40px;
-  }
-
-  .system-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: rgba(255,255,255,.5);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    margin-bottom: 16px;
-  }
-
-  .system-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255,255,255,.9);
-    line-height: 1.5;
-  }
-
-  /* ── RIGHT (form) ── */
-  .right {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 32px;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
   }
 
   .form-box {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    max-width: 360px;
+    max-width: 480px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 44px 44px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
   }
 
   .form-heading {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--gray-900);
+    text-align: center;
     margin-bottom: 6px;
-    letter-spacing: -.4px;
+    letter-spacing: -.3px;
   }
   .form-sub {
     font-size: 13.5px;
     color: var(--gray-400);
-    margin-bottom: 32px;
+    text-align: center;
+    margin-bottom: 28px;
   }
 
-  /* alert */
   .alert {
     display: flex;
     align-items: center;
@@ -212,7 +154,6 @@ $timeout = !empty($_GET['timeout']);
   .alert-warning { background: #FFFBEB; color: var(--amber); border: 1px solid #FDE68A; }
   .alert i { flex-shrink: 0; }
 
-  /* field */
   .field { margin-bottom: 18px; }
   .field label {
     display: block;
@@ -225,7 +166,7 @@ $timeout = !empty($_GET['timeout']);
   .input-wrap { position: relative; }
   .field input {
     width: 100%;
-    height: 44px;
+    height: 46px;
     padding: 0 14px;
     border: 1.5px solid var(--gray-200);
     border-radius: 8px;
@@ -257,7 +198,6 @@ $timeout = !empty($_GET['timeout']);
   }
   .eye-btn:hover { color: var(--blue); }
 
-  /* forgot */
   .forgot {
     text-align: right;
     margin-top: -10px;
@@ -271,10 +211,9 @@ $timeout = !empty($_GET['timeout']);
   }
   .forgot a:hover { text-decoration: underline; }
 
-  /* submit */
   .btn-submit {
     width: 100%;
-    height: 44px;
+    height: 46px;
     background: var(--blue);
     color: #fff;
     border: none;
@@ -293,25 +232,37 @@ $timeout = !empty($_GET['timeout']);
   }
   .btn-submit:active { transform: translateY(1px); }
 
-  /* footer */
   .form-footer {
-    margin-top: 32px;
+    margin-top: 28px;
     text-align: center;
     font-size: 11.5px;
     color: var(--gray-400);
   }
 
-  /* ── RESPONSIVE ── */
-  @media (max-width: 680px) {
-    .page    { flex-direction: column; }
-    .left    { width: 100%; padding: 36px 24px; }
-    .left::after, .left::before { display: none; }
-    .left-inner { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; }
-    .logo-wrap   { margin-bottom: 0; width: 56px; height: 56px; border-radius: 14px; }
-    .logo-wrap img { width: 42px; height: 42px; }
-    .school-sub  { margin-bottom: 0; }
-    .left-divider, .system-label, .system-name { display: none; }
-    .right   { padding: 36px 20px; }
+  .info-box {
+    margin-top: 22px;
+    padding: 14px 16px;
+    background: #F0F9FF;
+    border: 1.5px solid #BAE6FD;
+    border-radius: 10px;
+    text-align: left;
+  }
+  .info-box-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0369A1;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .info-box-text {
+    font-size: 13px;
+    color: #0C4A6E;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 540px) {
+    .form-box { padding: 32px 24px; max-width: 100%; }
   }
 </style>
 </head>
@@ -319,83 +270,69 @@ $timeout = !empty($_GET['timeout']);
 
 <div class="page">
 
-  <!-- ── LEFT STRIP ── -->
-  <div class="left">
-    <div class="left-inner">
-      <div class="logo-wrap">
-        <img src="https://bcp.edu.ph/logo.png" alt="BCP" onerror="this.style.display='none'">
-      </div>
-      <div class="school-name">Bestlink College<br>of the Philippines</div>
-      <div class="school-sub">Quezon City, Philippines</div>
-      <div class="left-divider"></div>
-      <div class="system-label">System</div>
-      <div class="system-name">Human Resource<br>Management System</div>
-    </div>
+  <div class="page-logo">
+    <img src="https://bcp.edu.ph/logo.png" alt="BCP" onerror="this.style.display='none'">
   </div>
 
-  <!-- ── RIGHT FORM ── -->
-  <div class="right">
-    <div class="form-box">
+  <div class="form-box">
 
-      <div class="form-heading">Welcome back</div>
-      <div class="form-sub">Sign in to your HRMS account</div>
+    <div class="form-heading">Welcome back</div>
+    <div class="form-sub">Sign in to your HRMS account</div>
 
-      <?php if ($timeout): ?>
-      <div class="alert alert-warning">
-        <i class="fas fa-clock"></i>
-        <span>Your session expired. Please sign in again.</span>
-      </div>
-      <?php endif; ?>
-
-      <?php if ($error): ?>
-      <div class="alert alert-danger">
-        <i class="fas fa-exclamation-circle"></i>
-        <span><?= e($error) ?></span>
-      </div>
-      <?php endif; ?>
-
-      <form method="POST" action="" novalidate>
-        <?= csrfField() ?>
-
-        <div class="field">
-          <label for="email">Email address</label>
-          <input type="email" id="email" name="email"
-            placeholder="you@bestlink.edu.ph"
-            autocomplete="email" required
-            value="<?= e($_POST['email'] ?? '') ?>">
-        </div>
-
-        <div class="field">
-          <label for="password">Password</label>
-          <div class="input-wrap">
-            <input type="password" id="password" name="password"
-              placeholder="••••••••"
-              autocomplete="current-password" required>
-            <button type="button" class="eye-btn" id="togglePw">
-              <i class="fas fa-eye" id="eyeIcon"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="forgot">
-          <a href="#">Forgot password?</a>
-        </div>
-
-        <button type="submit" class="btn-submit">Sign in</button>
-      </form>
-
-      <div class="form-footer">
-        &copy; <?= date('Y') ?> Bestlink College of the Philippines
-      </div>
-
-      <div style="margin-top:22px;padding:14px 16px;background:#F0F9FF;border:1.5px solid #BAE6FD;border-radius:10px;text-align:left;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0369A1;letter-spacing:0.06em;margin-bottom:6px;">👤 New Employee?</div>
-        <div style="font-size:13px;color:#0C4A6E;line-height:1.5;">Use the <strong>email and temporary password</strong> sent to your inbox when you were hired. You will be prompted to change your password on first login.</div>
-      </div>
-
+    <?php if ($timeout): ?>
+    <div class="alert alert-warning">
+      <i class="fas fa-clock"></i>
+      <span>Your session expired. Please sign in again.</span>
     </div>
-  </div>
+    <?php endif; ?>
 
+    <?php if ($error): ?>
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-circle"></i>
+      <span><?= e($error) ?></span>
+    </div>
+    <?php endif; ?>
+
+    <form method="POST" action="" novalidate>
+      <?= csrfField() ?>
+
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email"
+          placeholder="you@bestlink.edu.ph"
+          autocomplete="email" required
+          value="<?= e($_POST['email'] ?? '') ?>">
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="password" name="password"
+            placeholder="••••••••"
+            autocomplete="current-password" required>
+          <button type="button" class="eye-btn" id="togglePw">
+            <i class="fas fa-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="forgot">
+        <a href="#">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn-submit">Sign in</button>
+    </form>
+
+    <div class="form-footer">
+      &copy; <?= date('Y') ?> Bestlink College of the Philippines
+    </div>
+
+    <div class="info-box">
+      <div class="info-box-title">👤 New Employee?</div>
+      <div class="info-box-text">Use the <strong>email and temporary password</strong> sent to your inbox when you were hired. You will be prompted to change your password on first login.</div>
+    </div>
+
+  </div>
 </div>
 
 <script>
