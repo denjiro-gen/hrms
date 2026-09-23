@@ -36,3 +36,9 @@ uploads/tmp/
 .idea/
 *.swp
 *.swo
+
+# Environment secrets
+.env
+uploads/resumes/*
+uploads/employee_documents/*
+uploads/certificates/*

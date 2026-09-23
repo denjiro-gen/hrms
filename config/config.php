@@ -50,7 +50,8 @@ function peso(float $amount): string { return '&#8369; ' . number_format($amount
 function generateCode(string $prefix, string $table, string $col): string {
     $db   = getDB();
     $year = date('Y');
-    $stmt = $db->prepare("SELECT COUNT(*) FROM `$table` WHERE `$col` LIKE ?");
+    // Use standard SQL (no backticks) — compatible with both MySQL and PostgreSQL
+    $stmt = $db->prepare("SELECT COUNT(*) FROM $table WHERE $col LIKE ?");
     $stmt->execute(["$prefix-$year-%"]);
     $count = (int) $stmt->fetchColumn() + 1;
     return sprintf('%s-%s-%03d', $prefix, $year, $count);
