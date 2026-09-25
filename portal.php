@@ -59,7 +59,7 @@ if ($empId) {
 // Today's attendance
 $todayAttendance = false;
 if ($empId) {
-    $s = $db->prepare("SELECT * FROM attendance WHERE employee_id = ? AND attendance_date = CURDATE() LIMIT 1");
+    $s = $db->prepare("SELECT * FROM attendance WHERE employee_id = ? AND attendance_date = CURRENT_DATE LIMIT 1");
     $s->execute([$empId]);
     $todayAttendance = $s->fetch();
 }

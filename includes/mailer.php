@@ -13,12 +13,23 @@ require_once __DIR__ . '/phpmailer/Exception.php';
 require_once __DIR__ . '/phpmailer/PHPMailer.php';
 require_once __DIR__ . '/phpmailer/SMTP.php';
 
-// ── Gmail SMTP Credentials ──────────────────────────────────────────────────
-define('MAIL_HOST',     'smtp.gmail.com');
-define('MAIL_PORT',     587);
-define('MAIL_USERNAME', 'bestlinkcollegeoftheph@gmail.com');
-define('MAIL_PASSWORD', 'aqrhrpabsyuusovv');
-define('MAIL_FROM',     'bestlinkcollegeoftheph@gmail.com');
+// ── Load .env file if it exists (for local overrides) ──────────────────────
+$envFile = __DIR__ . '/../.env';
+if (file_exists($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
+        [$key, $val] = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($val);
+        putenv(trim($key) . '=' . trim($val));
+    }
+}
+
+// ── SMTP Credentials (loaded from .env) ─────────────────────────────────────
+define('MAIL_HOST',     getenv('MAIL_HOST')     ?: ($_ENV['MAIL_HOST']     ?? 'smtp.gmail.com'));
+define('MAIL_PORT',     getenv('MAIL_PORT')     ?: ($_ENV['MAIL_PORT']     ?? 587));
+define('MAIL_USERNAME', getenv('MAIL_USERNAME') ?: ($_ENV['MAIL_USERNAME'] ?? 'bestlinkcollegeoftheph@gmail.com'));
+define('MAIL_PASSWORD', getenv('MAIL_PASSWORD') ?: ($_ENV['MAIL_PASSWORD'] ?? 'aqrhrpabsyuusovv'));
+define('MAIL_FROM',     getenv('MAIL_FROM')     ?: ($_ENV['MAIL_FROM']     ?? 'bestlinkcollegeoftheph@gmail.com'));
 define('MAIL_FROM_NAME','Bestlink College HR Department');
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -49,8 +60,9 @@ function sendMail(string $to, string $toName, string $subject, string $htmlBody,
         $mail->CharSet    = 'UTF-8';
         $mail->XMailer    = ' '; // Hide mailer identity
 
-        // Anti-spam: proper message ID
-        $mail->MessageID  = '<' . uniqid('hrms_', true) . '@bestlinkhrms.local>';
+        // Anti-spam: proper message ID with a real domain (not .local)
+        $domain = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'bestlink.edu.ph';
+        $mail->MessageID  = '<' . uniqid('hrms_', true) . '@' . $domain . '>';
 
         // Sender & recipient
         $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);

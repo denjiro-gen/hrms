@@ -66,7 +66,7 @@ $payrolls = $db->query("
     FROM payroll p
     LEFT JOIN payroll_periods pp ON p.period_id = pp.id
     LEFT JOIN users u ON p.prepared_by = u.id
-    GROUP BY p.period_id
+    GROUP BY p.period_id, pp.period_name, pp.start_date, pp.end_date, u.first_name, u.last_name
     ORDER BY MAX(p.created_at) DESC
     LIMIT 50
 ")->fetchAll();

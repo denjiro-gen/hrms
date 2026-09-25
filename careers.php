@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/mailer.php';
 $db = getDB();
 
 $error = "";
@@ -61,11 +62,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $applicantId = $db->lastInsertId();
 
                     // 2. Insert into applications table
-                    $stmtJob = $db->prepare("INSERT INTO applications (job_posting_id, applicant_id, application_date, status, cover_letter) VALUES (?, ?, CURDATE(), 'Applied', ?)");
+                    $stmtJob = $db->prepare("INSERT INTO applications (job_posting_id, applicant_id, application_date, status, cover_letter) VALUES (?, ?, CURRENT_DATE, 'Applied', ?)");
                     $stmtJob->execute([$jobId, $applicantId, $coverLetter ?: null]);
 
                     $db->commit();
                     $success = "Your application has been submitted successfully! Our recruitment team will review it shortly.";
+
+                    // ── Send confirmation email to applicant ─────────────
+                    $jobTitle = '';
+                    try {
+                        $jobStmt = $db->prepare("SELECT position_title FROM job_postings WHERE id = ?");
+                        $jobStmt->execute([$jobId]);
+                        $jobTitle = $jobStmt->fetchColumn() ?: 'the position';
+                    } catch (Exception $e) {}
+
+                    $applicantHtml = "
+                    <div style='font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;'>
+                      <div style='background:linear-gradient(135deg,#0A2342,#1a56a0);padding:32px;border-radius:12px 12px 0 0;text-align:center;'>
+                        <h1 style='color:#fff;font-size:24px;margin:0;'>Application Received!</h1>
+                      </div>
+                      <div style='background:#fff;padding:32px;border:1px solid #E5E7EB;border-top:none;border-radius:0 0 12px 12px;'>
+                        <p style='color:#374151;font-size:15px;'>Dear <strong>{$firstName} {$lastName}</strong>,</p>
+                        <p style='color:#374151;font-size:15px;margin-top:12px;'>Thank you for applying for the <strong>{$jobTitle}</strong> position at <strong>Bestlink College of the Philippines</strong>.</p>
+                        <p style='color:#374151;font-size:15px;margin-top:12px;'>We have successfully received your application and resume. Our recruitment team will carefully review your qualifications and contact you if you are shortlisted.</p>
+                        <div style='background:#F0F4FA;border-radius:8px;padding:16px;margin:20px 0;'>
+                          <p style='color:#6B7280;font-size:13px;margin:0;'><strong>Position Applied:</strong> {$jobTitle}</p>
+                          <p style='color:#6B7280;font-size:13px;margin:8px 0 0;'><strong>Application Date:</strong> " . date('F d, Y') . "</p>
+                        </div>
+                        <p style='color:#9CA3AF;font-size:13px;margin-top:24px;'>Best regards,<br><strong>Bestlink College HR Department</strong></p>
+                      </div>
+                    </div>";
+
+                    sendMail(
+                        $email,
+                        "{$firstName} {$lastName}",
+                        "Application Received — {$jobTitle} | Bestlink College",
+                        $applicantHtml
+                    );
+
+                    // ── Notify HR team ──────────────────────────────────
+                    $hrHtml = "
+                    <div style='font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;'>
+                      <div style='background:#1D4ED8;padding:24px;border-radius:12px 12px 0 0;'>
+                        <h2 style='color:#fff;margin:0;font-size:18px;'>New Job Application Received</h2>
+                      </div>
+                      <div style='background:#fff;padding:24px;border:1px solid #E5E7EB;border-radius:0 0 12px 12px;'>
+                        <p style='color:#374151;'><strong>Applicant:</strong> {$firstName} {$middleName} {$lastName}</p>
+                        <p style='color:#374151;'><strong>Email:</strong> {$email}</p>
+                        <p style='color:#374151;'><strong>Phone:</strong> {$phone}</p>
+                        <p style='color:#374151;'><strong>Position:</strong> {$jobTitle}</p>
+                        <p style='color:#374151;'><strong>Education:</strong> {$education}</p>
+                        <p style='color:#374151;'><strong>Experience:</strong> {$experience} years</p>
+                        <p style='color:#374151;'><strong>Skills:</strong> {$skills}</p>
+                        <p style='color:#374151;margin-top:12px;'>Please log in to the HRMS to review this application.</p>
+                      </div>
+                    </div>";
+
+                    sendMail(
+                        MAIL_FROM,
+                        'HR Department',
+                        "New Application: {$firstName} {$lastName} — {$jobTitle}",
+                        $hrHtml
+                    );
                 } catch (PDOException $e) {
                     $db->rollBack();
                     $error = "An error occurred while saving your application. Please try again. " . $e->getMessage();
@@ -185,10 +243,11 @@ $jobs = $db->query("SELECT j.*, d.name as department_name FROM job_postings j LE
 
   <div class="careers-header">
     <div class="header-nav">
-      <a href="<?= BASE_URL ?>/portal.php"><i class="fas fa-user me-1"></i> Employee Portal</a>
-      <a href="<?= BASE_URL ?>/login.php"><i class="fas fa-sign-in-alt me-1"></i> HR Login</a>
+      <!-- Buttons removed as requested -->
     </div>
-    <div class="logo-circle">B</div>
+    <div class="logo-circle" style="background:transparent; border:none;">
+      <img src="https://bcp.edu.ph/logo.png" alt="BCP Logo" style="width:100%; height:100%; object-fit:contain;">
+    </div>
     <h1>Join Our Team</h1>
     <p>Shape the future of education at Bestlink College of the Philippines</p>
   </div>

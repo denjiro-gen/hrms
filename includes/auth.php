@@ -23,7 +23,7 @@ function requireLogin(): void {
     if (empty($_SESSION['user_id'])) { header('Location: ' . BASE_URL . '/login.php'); exit; }
     
     // Force password change on first login
-    if (!empty($_SESSION['first_login']) && $_SESSION['first_login'] == 1) {
+    if (!empty($_SESSION['must_change_password']) && $_SESSION['must_change_password'] == 1) {
         $currentScript = basename($_SERVER['SCRIPT_NAME']);
         if ($currentScript !== 'change_password.php' && $currentScript !== 'logout.php') {
             header('Location: ' . BASE_URL . '/change_password.php');
@@ -85,7 +85,7 @@ function loginUser(string $email, string $password): bool {
     $_SESSION['role_slug']  = $user['role_slug'];
     $_SESSION['dept_id']    = $user['department_id'];
     $_SESSION['employee_id']= $user['employee_id'];
-    $_SESSION['first_login']= $user['first_login'];
+    $_SESSION['must_change_password']= $user['must_change_password'];
     $_SESSION['last_activity'] = time();
     $_SESSION['user']       = $user;
     $db->prepare("UPDATE users SET last_login=NOW() WHERE id=?")->execute([$user['id']]);

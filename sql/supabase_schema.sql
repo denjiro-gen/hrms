@@ -451,4 +451,20 @@ INSERT INTO leave_types (name, description, max_days_per_year, is_paid) VALUES
   ('Sick Leave', 'Medical/illness leave', 15, TRUE),
   ('Emergency Leave', 'Emergency situations', 3, TRUE),
   ('Maternity Leave', 'Maternity leave', 105, TRUE),
-  ('Paternity Leave', 'Paternity leave', 7, TRUE);
+  ('Paternity Leave', 'Paternity Leave', 7, TRUE);
+
+-- Insert a default IT Department
+INSERT INTO departments (name, code, description) VALUES
+('Information Technology', 'IT', 'IT and System Administration');
+
+-- Insert default employees for Demo Accounts
+INSERT INTO employees (employee_code, department_id, position, first_name, last_name, email, employment_type, employment_status, basic_salary) VALUES
+('EMP-2026-001', 1, 'System Administrator', 'System', 'Admin', 'admin@bestlink.edu.ph', 'Regular', 'Active', 50000.00),
+('EMP-2026-002', 1, 'HR Officer', 'HR', 'Officer', 'hr@bestlink.edu.ph', 'Regular', 'Active', 40000.00),
+('EMP-2026-003', 1, 'Department Head', 'Dept', 'Head', 'depthead@bestlink.edu.ph', 'Regular', 'Active', 45000.00);
+
+-- Insert the Demo Accounts users (Password for all is: password)
+INSERT INTO users (role_id, employee_id, username, email, password_hash, first_name, last_name, status) VALUES
+(1, 1, 'admin', 'admin@bestlink.edu.ph', '$2y$12$IQ9cbkK8Y0kYMRzaW2BWou6GrzmT0T7Lz5ZBA7cGVliQ8iNPGZMzy', 'System', 'Admin', 'Active'),
+(2, 2, 'hr', 'hr@bestlink.edu.ph', '$2y$12$IQ9cbkK8Y0kYMRzaW2BWou6GrzmT0T7Lz5ZBA7cGVliQ8iNPGZMzy', 'HR', 'Officer', 'Active'),
+(3, 3, 'depthead', 'depthead@bestlink.edu.ph', '$2y$12$IQ9cbkK8Y0kYMRzaW2BWou6GrzmT0T7Lz5ZBA7cGVliQ8iNPGZMzy', 'Dept', 'Head', 'Active');

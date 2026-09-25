@@ -32,9 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Update to new password
             $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-            $update = $db->prepare("UPDATE users SET password_hash = ?, first_login = 0 WHERE id = ?");
+            $update = $db->prepare("UPDATE users SET password_hash = ?, must_change_password = FALSE WHERE id = ?");
             if ($update->execute([$newHash, $userId])) {
-                $_SESSION['first_login'] = 0;
+                $_SESSION['must_change_password'] = 0;
                 $success = 'Password successfully changed.';
             } else {
                 $error = 'An error occurred while updating your password. Please try again.';

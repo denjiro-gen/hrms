@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $stmtEmp = $db->prepare("INSERT INTO employees 
                     (employee_code, department_id, position, first_name, middle_name, last_name, 
                      gender, date_of_birth, contact_number, email, address, date_hired) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE())");
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE)");
                 
                 $stmtEmp->execute([
                     $empCode,
@@ -86,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
                 
                 $stmtUser = $db->prepare("INSERT INTO users 
-                    (role_id, employee_id, department_id, username, email, password_hash, first_name, last_name, first_login) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
+                    (role_id, employee_id, department_id, username, email, password_hash, first_name, last_name, must_change_password) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)");
                 
                 $stmtUser->execute([
                     $roleId,

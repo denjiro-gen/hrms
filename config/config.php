@@ -40,7 +40,7 @@ function getFlash(string $key): string {
     unset($_SESSION['flash'][$key]);
     return $msg;
 }
-function e(string $str): string { return htmlspecialchars($str, ENT_QUOTES, 'UTF-8'); }
+function e(?string $str): string { return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8'); }
 function paginate(int $total, int $perPage, int $page): array {
     $totalPages = (int) ceil($total / max(1, $perPage));
     $page       = max(1, min($page, max(1, $totalPages)));

@@ -54,19 +54,19 @@ $initials = strtoupper(substr($_SESSION['first_name'] ?? 'U', 0, 1) . substr($_S
 
     <div class="nav-divider"></div>
 
-    <?php if (in_array($role, ['admin','hr','dept_head'])): ?>
+    <?php if (in_array($role, ['admin','hr','dept_head','school'])): ?>
     <a href="<?= BASE_URL ?>/modules/employees/index.php" class="nav-link <?= activeIf('/employees/') ?>" data-tip="Employees">
       <i class="fas fa-users"></i>
     </a>
     <?php endif; ?>
 
-    <?php if (in_array($role, ['admin','hr'])): ?>
+    <?php if (in_array($role, ['admin','hr','school'])): ?>
     <a href="<?= BASE_URL ?>/modules/recruitment/jobs/index.php" class="nav-link <?= activeIf('/recruitment/') ?>" data-tip="Recruitment">
       <i class="fas fa-briefcase"></i>
     </a>
     <?php endif; ?>
 
-    <?php if (in_array($role, ['admin','hr','dept_head'])): ?>
+    <?php if (in_array($role, ['admin','hr','dept_head','school'])): ?>
     <a href="<?= BASE_URL ?>/modules/attendance/index.php" class="nav-link <?= activeIf('/attendance/') ?>" data-tip="Attendance">
       <i class="fas fa-calendar-check"></i>
     </a>
@@ -75,13 +75,13 @@ $initials = strtoupper(substr($_SESSION['first_name'] ?? 'U', 0, 1) . substr($_S
     </a>
     <?php endif; ?>
 
-    <?php if (in_array($role, ['admin','hr'])): ?>
+    <?php if (in_array($role, ['admin','hr','school'])): ?>
     <a href="<?= BASE_URL ?>/modules/payroll/index.php" class="nav-link <?= activeIf('/payroll/') ?>" data-tip="Payroll">
       <i class="fas fa-money-bill-wave"></i>
     </a>
     <?php endif; ?>
 
-    <?php if (in_array($role, ['admin','hr','dept_head'])): ?>
+    <?php if (in_array($role, ['admin','hr','dept_head','school'])): ?>
     <a href="<?= BASE_URL ?>/modules/performance/index.php" class="nav-link <?= activeIf('/performance/') ?>" data-tip="Performance">
       <i class="fas fa-chart-line"></i>
     </a>
@@ -90,7 +90,7 @@ $initials = strtoupper(substr($_SESSION['first_name'] ?? 'U', 0, 1) . substr($_S
     </a>
     <?php endif; ?>
 
-    <?php if (in_array($role, ['admin','hr'])): ?>
+    <?php if (in_array($role, ['admin','hr','school'])): ?>
     <a href="<?= BASE_URL ?>/modules/benefits/index.php" class="nav-link <?= activeIf('/benefits/') ?>" data-tip="Benefits">
       <i class="fas fa-heart"></i>
     </a>
