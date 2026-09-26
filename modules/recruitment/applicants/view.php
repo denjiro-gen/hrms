@@ -35,12 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $newStatus = $_POST['status'] ?? '';
     
     if (in_array($newStatus, ['Applied','Screening','Interview','Shortlisted','Hired','Rejected'])) {
-        $db->prepare("UPDATE applications SET status = ? WHERE id = ?")->execute([$newStatus, $id]);
         
         // Auto-generate employee and user account if Hired
         if ($newStatus === 'Hired' && $application['status'] !== 'Hired') {
             try {
                 $db->beginTransaction();
+                
+                // Update status inside transaction so it rolls back on failure
+                $db->prepare("UPDATE applications SET status = ? WHERE id = ?")->execute([$newStatus, $id]);
                 
                 // 1. Create Employee Record
                 $empCode = generateCode('BCP', 'employees', 'employee_code');
@@ -123,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
 
         } elseif ($newStatus !== $application['status'] && in_array($newStatus, ['Screening', 'Interview', 'Shortlisted', 'Rejected'])) {
+            $db->prepare("UPDATE applications SET status = ? WHERE id = ?")->execute([$newStatus, $id]);
             // Send status update notification email
             $emailResult = sendStatusUpdateEmail(
                 $application['email'],
@@ -136,6 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 flash('warning', 'Status updated to "' . $newStatus . '", but notification email failed: ' . $emailResult['error']);
             }
         } else {
+            if ($newStatus !== $application['status']) {
+                $db->prepare("UPDATE applications SET status = ? WHERE id = ?")->execute([$newStatus, $id]);
+            }
             flash('success', 'Applicant status updated to ' . $newStatus);
         }
         
